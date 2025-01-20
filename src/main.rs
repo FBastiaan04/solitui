@@ -1,4 +1,4 @@
-use std::io;
+use std::{io, mem};
 
 use crossterm::{event::{self, EnableMouseCapture, Event, KeyCode, MouseEventKind}, execute};
 use rand::{seq::SliceRandom, thread_rng};
@@ -236,8 +236,13 @@ impl App {
                         if let Some(mut card) = self.stock.0.pop() {
                             card.hidden = false;
                             self.discard.0.push(card);
-                            SelectedPos::Discard
-                        } else {SelectedPos::None}
+                        } else {
+                            self.stock.0.extend(self.discard.0.drain(..).rev());
+                            for c in &mut self.stock.0 {
+                                c.hidden = true;
+                            }
+                        }
+                        SelectedPos::Discard
                     }
                     5..10 => {
                         if self.discard.0.len() == 0 {
