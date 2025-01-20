@@ -113,6 +113,11 @@ impl Card {
                 ..symbols::border::ROUNDED
             })
     };
+
+    const BLOCK_EMPTY: Block<'static> = {
+        Block::bordered()
+            .border_set(border::DOUBLE)
+    };
 }
 
 #[derive(Default)]
@@ -148,6 +153,8 @@ impl App {
 
 struct Column<'a>(&'a [Card]);
 
+struct Pile<'a>(&'a [Card]);
+
 impl<'a> Widget for Column<'a> {
     fn render(self, area: Rect, buf: &mut Buffer) {
         if self.0.len() == 0 {return}
@@ -177,23 +184,60 @@ impl<'a> Widget for Column<'a> {
     }
 }
 
+impl<'a> Widget for Pile<'a> {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        let area = Rect::new(area.x, area.y, 5, 5);
+        if let Some(top) = self.0.last() {
+            Paragraph::new(top.to_span())
+                .block(Card::BLOCK_SINGLE)
+                .render(area, buf);
+            return
+        }
+        Card::BLOCK_EMPTY.render(area, buf);
+    }
+}
+
 impl Widget for &App {
     fn render(self, area: Rect, buf: &mut Buffer) {
+        if area.width < 46 {
+            Span::raw("Too small")
+                .render(area, buf);
+            return;
+        }
+
+        let x = area.x;
+        let y = area.y;
+
+        // columns
         for (i, row) in self.rows.iter().enumerate() {
             let row = Column(row.as_slice());
             row.render(Rect::new(
-                area.x + i as u16 * 5,
-                area.y,
-                5, 20
+                x + i as u16 * 5,
+                y,
+                5,
+                20
             ), buf);
         }
-        /*
-        for i in 1..3 {
-        Paragraph::new(self.rows[1][0].to_span())
-            .block(Card::BLOCK_FIRST)
-            .render(Rect::new(area.x, area.y + 2 * i as u16, 5, 2), buf);
-        }
-        */
+
+        // stock
+        if self.stock.len() > 0 {
+            Card::BLOCK_SINGLE
+        } else {
+            Card::BLOCK_EMPTY
+        }.render(Rect::new(
+            x + 41,
+            y,
+            5,
+            5
+        ), buf);
+
+        // discard
+        Pile(&self.discard).render(Rect::new(
+            x + 41,
+            y + 5,
+            5,
+            4
+        ), buf);
     }
 }
 
