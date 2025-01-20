@@ -205,6 +205,9 @@ impl App {
                 let new_pos = self.get_selected_pos(ev.column as usize, ev.row as usize);
                 
                 self.handle_move(new_pos);
+                if self.check_win() {
+                    self.exit = true;
+                }
                 self.selected_pos = new_pos;
             }
             _ => {}
@@ -237,7 +240,10 @@ impl App {
                             card.hidden = false;
                             self.discard.0.push(card);
                         } else {
-                            self.stock.0.extend(self.discard.0.drain(..).rev());
+                            if self.discard.0.len() == 0 {
+                                return SelectedPos::None;
+                            }
+                            self.stock.0.extend(self.discard.0.drain(1..).rev());
                             for c in &mut self.stock.0 {
                                 c.hidden = true;
                             }
@@ -345,7 +351,8 @@ impl App {
 
     fn validate_suit(&self, pile_n: usize, card: &Card) -> bool {
         if let Some(last) = self.suit_piles[pile_n].0.last() {
-            last.suit == card.suit
+            last.suit == card.suit &&
+            last.number + 1 == card.number
         } else {
             true
         }
@@ -358,6 +365,10 @@ impl App {
         } else {
             card.number == 12 // King
         }
+    }
+
+    fn check_win(&self) -> bool {
+        self.suit_piles.iter().map(|p| p.0.len()).sum::<usize>() == 52
     }
 }
 
