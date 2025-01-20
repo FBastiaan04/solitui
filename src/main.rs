@@ -1,4 +1,4 @@
-use std::{io, mem};
+use std::io;
 
 use crossterm::{event::{self, EnableMouseCapture, Event, KeyCode, MouseEventKind}, execute};
 use rand::{seq::SliceRandom, thread_rng};
@@ -129,7 +129,6 @@ struct App {
     suit_piles: [Pile; 4],
     selected_pos: SelectedPos,
     exit: bool,
-    debug: String
 }
 
 #[derive(PartialEq, Debug, Clone, Copy)]
@@ -148,8 +147,7 @@ impl App {
             discard: Pile(Vec::new()),
             suit_piles: [const { Pile(Vec::new()) }; 4],
             selected_pos: SelectedPos::None,
-            exit: false,
-            debug: "DEBUG STRING".to_string()
+            exit: false
         };
 
         let mut rng = thread_rng();
@@ -180,7 +178,6 @@ impl App {
 
     fn handle_events(&mut self) -> io::Result<()> {
         let ev = event::read()?;
-        // self.debug = format!("{:#?}", ev);
         match ev {
             Event::Key(ev) => {
                 match ev.code {
@@ -199,8 +196,6 @@ impl App {
                 if ev.kind != MouseEventKind::Up(event::MouseButton::Left) {
                     return Ok(());
                 }
-
-                // self.debug = format!("{:#?}", ev);
 
                 let new_pos = self.get_selected_pos(ev.column as usize, ev.row as usize);
                 
@@ -271,8 +266,6 @@ impl App {
     fn handle_move(&mut self, dest: SelectedPos) {
         let src = &self.selected_pos;
 
-        self.debug = format!("{:#?} -> {:#?}", src, dest);
-        
         match dest {
             SelectedPos::None | SelectedPos::Discard => {}
             SelectedPos::SuitPile(n) => {
@@ -290,11 +283,9 @@ impl App {
                         // only allow one card
                         return;
                     }
-                    self.debug = "Here1".to_string();
                     if !self.validate_suit(n, &self.rows[*x].0[*y]) {
                         return;
                     }
-                    self.debug = "Here2".to_string();
                     self.suit_piles[n].0.push(self.rows[*x].0.pop().unwrap());
 
                     if let Some(card) = self.rows[*x].0.last_mut() {
@@ -469,16 +460,6 @@ impl Widget for &App {
             ), buf);
             y += 5;
         }
-
-        x += 5;
-
-        Paragraph::new(self.debug.clone())
-            .render(Rect::new(
-                x,
-                0,
-                area.width - x,
-                area.height
-            ), buf)
     }
 }
 
