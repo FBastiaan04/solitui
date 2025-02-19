@@ -123,7 +123,7 @@ impl Card {
 }
 
 struct App {
-    rows: [Column; 8],
+    rows: [Column; 7],
     stock: Pile,
     discard: Pile,
     suit_piles: [Pile; 4],
@@ -142,7 +142,7 @@ enum SelectedPos {
 impl App {
     fn init() -> Self {
         let mut res = Self {
-            rows: [const { Column(Vec::new()) }; 8],
+            rows: [const { Column(Vec::new()) }; 7],
             stock: Pile(Vec::new()),
             discard: Pile(Vec::new()),
             suit_piles: [const { Pile(Vec::new()) }; 4],
@@ -154,7 +154,7 @@ impl App {
         
         let mut deck = Card::DECK.choose_multiple(&mut rng, 52).map(|c| *c);
 
-        for i in 0..8 {
+        for i in 0..7 {
             res.rows[i] = Column(deck.by_ref().take(i + 1).collect());
             res.rows[i].0[i].hidden = false;
         }
@@ -212,7 +212,7 @@ impl App {
 
     fn get_selected_pos(&mut self, x: usize, y: usize) -> SelectedPos {
         match x {
-            0..=39 => {
+            0..=34 => {
                 let x = x as usize / 5;
                 let col = &self.rows[x];
                 let y = y as usize / 2;
@@ -228,7 +228,7 @@ impl App {
                 }
                 SelectedPos::Column(x, y)
             }
-            41..46 => {
+            36..41 => {
                 match y {
                     0..5 => {
                         if let Some(mut card) = self.stock.0.pop() {
@@ -345,7 +345,7 @@ impl App {
             last.suit == card.suit &&
             last.number + 1 == card.number
         } else {
-            true
+            card.number == 0
         }
     }
 
@@ -411,7 +411,7 @@ impl Widget for &Pile {
 
 impl Widget for &App {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        if area.width < 46 {
+        if area.width < 41 || area.height < 31 {
             Span::raw("Too small")
                 .render(area, buf);
             return;
